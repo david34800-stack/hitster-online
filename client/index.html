@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#302b63"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <title>Hitster Online</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    :root{--bg1:#0f0c29;--bg2:#302b63;--bg3:#24243e;--primary:#ff0055;--secondary:#00d4ff;--gold:#ffd700;--success:#00b894;--fail:#d63031;--glass:rgba(255,255,255,0.055);--border:rgba(255,255,255,0.13)}
+    body{margin:0;padding:0;font-family:'Poppins',sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:white;min-height:100dvh;overscroll-behavior:none;user-select:none;padding-bottom:env(safe-area-inset-bottom)}
+    button{font-family:'Poppins',sans-serif;cursor:pointer;border:none;outline:none;transition:transform .18s,box-shadow .18s;touch-action:manipulation;min-height:44px}
+    button:active{transform:scale(.96)}
+    input{font-family:'Poppins',sans-serif;outline:none;min-height:44px;touch-action:manipulation}
+    h1,h2,h3{font-family:'Montserrat',sans-serif;margin:0}
+    .hidden{display:none!important}
+    /* ECRANS */
+    .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:max(20px,env(safe-area-inset-top)) 20px 20px;gap:14px;overflow-y:auto;z-index:10}
+    /* ACCUEIL */
+    .logo{font-size:2.8rem;font-weight:800;letter-spacing:4px;background:linear-gradient(90deg,var(--primary),#ff6b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+    .subtitle{color:rgba(255,255,255,.5);font-size:.88rem;margin-bottom:16px;text-align:center}
+    .card-glass{background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:20px;padding:24px 20px;width:100%;max-width:400px}
+    .field-label{font-size:.8rem;color:rgba(255,255,255,.5);margin-bottom:5px}
+    .field-input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:white;font-size:1rem;margin-bottom:10px}
+    .field-input::placeholder{color:rgba(255,255,255,.3)}
+    .btn-green{width:100%;padding:13px;border-radius:50px;font-weight:700;font-size:1rem;color:white;background:linear-gradient(135deg,var(--success),#00cec9);box-shadow:0 4px 18px rgba(0,184,148,.4);margin-bottom:8px}
+    .btn-blue{width:100%;padding:13px;border-radius:50px;font-weight:700;font-size:1rem;color:white;background:linear-gradient(135deg,var(--secondary),#0080ff);box-shadow:0 4px 18px rgba(0,128,255,.35)}
+    .divider{display:flex;align-items:center;gap:10px;margin:4px 0;color:rgba(255,255,255,.25);font-size:.8rem}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.1)}
+    /* LOBBY */
+    .lobby-code{font-family:'Montserrat',sans-serif;font-size:2.8rem;font-weight:800;letter-spacing:8px;color:var(--gold);text-shadow:0 0 20px rgba(255,215,0,.4)}
+    .lobby-hint{font-size:.76rem;color:rgba(255,255,255,.4);text-align:center}
+    .players-list{width:100%;max-width:400px;display:flex;flex-direction:column;gap:7px}
+    .player-item{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:12px;padding:9px 13px;border:1px solid var(--border)}
+    .player-item.me{border-color:var(--secondary)}
+    .player-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#ff6b9d);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.88rem;flex-shrink:0}
+    .player-name{flex:1;font-weight:600;font-size:.9rem}
+    .host-badge{font-size:.62rem;background:var(--gold);color:#1a1a2e;border-radius:20px;padding:2px 7px;font-weight:700}
+    .waiting-dots::after{content:'...';animation:dots 1.2s infinite}
+    @keyframes dots{0%,100%{content:'.'}33%{content:'..'}66%{content:'...'}}
+    /* GAME SCREEN */
+    #screen-game{justify-content:flex-start;padding:0;overflow-y:auto;overflow-x:hidden}
+    .game-header{display:flex;justify-content:space-between;align-items:center;padding:max(10px,env(safe-area-inset-top)) 12px 8px;width:100%;flex-shrink:0}
+    .logo-mini{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.2rem;background:linear-gradient(90deg,var(--primary),#ff6b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    #round-badge{background:rgba(255,255,255,.07);border:1px solid var(--border);padding:4px 12px;border-radius:50px;font-size:.76rem;font-weight:600}
+    .highlight{color:var(--gold)}
+    /* SCORES */
+    #scoreboard{width:100%;padding:8px 10px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--border)}
+    #scoreboard h3{font-size:.72rem;color:rgba(255,255,255,.4);margin-bottom:5px;padding:0 2px}
+    #scores-list{display:flex;flex-wrap:wrap;gap:4px}
+    .score-item{flex:1 1 auto;min-width:90px;padding:5px 9px;border-radius:9px;font-size:.7rem;border:1px solid transparent;background:rgba(255,255,255,.05)}
+    .score-item.active-turn{background:rgba(255,0,85,.15);border-color:rgba(255,0,85,.3);font-weight:700}
+    .score-item.me-score{border-color:rgba(0,212,255,.25)}
+    .score-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+    .score-detail{font-size:.6rem;opacity:.7}
+    /* ZONE CARTE */
+    #current-zone{width:100%;padding:10px;display:flex;flex-direction:row;align-items:stretch;gap:8px;background:var(--glass);border-bottom:1px solid var(--border)}
+    #current-card-wrap{flex-shrink:0;display:flex;align-items:center}
+    .card{background:white;border-radius:10px;color:#2d3436;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.38);cursor:grab;position:relative;flex-shrink:0;transition:transform .15s}
+    .card:active{cursor:grabbing;transform:scale(.97)}
+    .card-back{width:100%;height:100%;border-radius:10px;background:linear-gradient(145deg,#1a0533,#2d1b69,#0f3460);display:flex;align-items:center;justify-content:center}
+    .card-logo{width:38px;height:38px;background:linear-gradient(135deg,var(--primary),#ff6b9d);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.95rem;box-shadow:0 0 16px rgba(255,0,85,.55)}
+    .card-face{padding:7px;display:flex;flex-direction:column;justify-content:space-between;width:100%;height:100%}
+    .card-title{font-weight:600;font-size:.7rem;overflow:hidden;max-height:2.4em}
+    .card-artist{font-size:.62rem;opacity:.7}
+    .card-year{font-weight:900;font-size:1.1rem;text-align:right;margin-top:auto}
+    #current-card-wrap .card{width:72px;height:98px;box-shadow:0 0 0 2px var(--secondary),0 0 18px rgba(0,212,255,.45);animation:cardGlow 2.5s ease-in-out infinite}
+    @keyframes cardGlow{0%,100%{box-shadow:0 0 0 2px var(--secondary),0 0 18px rgba(0,212,255,.4)}50%{box-shadow:0 0 0 2px var(--secondary),0 0 36px rgba(0,212,255,.75)}}
+    /* AUDIO */
+    #audio-inline{flex-shrink:0;width:76px;padding:6px;border-radius:10px;gap:4px;border:1px solid rgba(0,212,255,.22);background:linear-gradient(135deg,rgba(0,212,255,.1),rgba(0,0,0,.3));display:none;flex-direction:column;align-items:center;justify-content:center}
+    #audio-inline.active{display:flex}
+    #audio-status{font-size:.55rem;color:rgba(255,255,255,.65);text-align:center}
+    .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.12);border-top-color:var(--secondary);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .play-anim{display:flex;gap:2px;height:16px;align-items:flex-end}
+    .bar{width:3px;border-radius:3px 3px 0 0;background:linear-gradient(to top,var(--primary),var(--secondary));animation:eq .5s infinite}
+    .bar:nth-child(1){animation-delay:0s}.bar:nth-child(2){animation-delay:.1s}.bar:nth-child(3){animation-delay:.2s}.bar:nth-child(4){animation-delay:.15s}.bar:nth-child(5){animation-delay:.05s}
+    @keyframes eq{0%,100%{height:2px}50%{height:16px}}
+    #stop-btn{padding:2px 6px;font-size:.55rem;border-radius:20px;background:rgba(255,0,85,.2);border:1px solid rgba(255,0,85,.35);color:white;min-height:24px;width:100%}
+    /* CONTROLES */
+    #controls-wrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;justify-content:center}
+    #song-info{font-size:.68rem;color:rgba(255,255,255,.55);line-height:1.3}
+    #listen-btn{width:100%;padding:9px 8px;font-size:.72rem;border-radius:10px;background:linear-gradient(135deg,var(--secondary),#0080ff);color:white;box-shadow:0 3px 12px rgba(0,128,255,.35)}
+    #blind-badges{display:flex;gap:4px;flex-wrap:wrap}
+    #blind-badges span{font-size:.62rem;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);padding:2px 7px;border-radius:20px}
+    #waiting-turn{flex:1;min-width:0;padding:10px;border-radius:12px;font-size:.78rem;text-align:center;color:rgba(255,255,255,.5);background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.12);display:none;align-items:center;justify-content:center}
+    /* FRISE */
+    #timeline-section{width:100%;padding:8px 10px 10px}
+    .timeline-header{display:flex;justify-content:space-between;margin-bottom:8px;font-family:'Montserrat',sans-serif;font-weight:700;color:var(--secondary);font-size:.82rem}
+    .placement-grid{display:grid;grid-template-columns:repeat(5,calc((100vw - 60px)/5));gap:5px;padding-bottom:20px}
+    .drop-target{width:100%;aspect-ratio:2.5/3.5;border:2px dashed rgba(255,255,255,.13);border-radius:10px;background:rgba(0,0,0,.14);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;transition:all .2s;touch-action:none}
+    .drop-target:not(.occupied)::after{content:'+';font-size:1rem;color:rgba(255,255,255,.14)}
+    .drop-target:hover:not(.occupied){background:rgba(0,212,255,.07);border-color:var(--secondary)}
+    .drop-target.occupied{border:none;background:transparent}
+    .drop-target .card{width:100%;height:100%;cursor:default}
+    .slot-hint{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:.42rem;color:rgba(255,255,255,.22);white-space:nowrap;font-weight:600}
+    /* Cartes frise : année uniquement */
+    .drop-target.occupied .card-face .card-title,
+    .drop-target.occupied .card-face .card-artist{display:none}
+    .drop-target.occupied .card-face{justify-content:center!important;align-items:center!important}
+    .drop-target.occupied .card-year{font-size:1rem!important;margin:0!important;text-align:center!important}
+    /* Couleurs décennies */
+    .d60{color:#e17055}.d70{color:#fdcb6e}.d80{color:#fd79a8}.d90{color:#a29bfe}.d00{color:#00b894}.d10{color:#00cec9}.d20{color:#0984e3}
+    /* FEEDBACK */
+    #feedback-zone{width:100%;padding:0 10px;margin-top:6px;display:flex;flex-direction:column;gap:8px}
+    .fz-banner{width:100%;padding:14px 20px;border-radius:14px;text-align:center;font-family:'Montserrat',sans-serif;font-size:1.3rem;font-weight:900;color:white;animation:popIn .3s cubic-bezier(0.34,1.56,0.64,1)}
+    .fz-banner.success{background:linear-gradient(135deg,var(--success),#00cec9)}
+    .fz-banner.fail{background:linear-gradient(135deg,var(--fail),#e55039)}
+    @keyframes popIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+    /* BOUTON SUIVANT */
+    #next-btn{width:calc(100% - 20px);margin:6px 10px;padding:14px;border-radius:14px;font-size:1rem;font-weight:800;color:white;background:linear-gradient(135deg,var(--primary),#ff4757);box-shadow:0 4px 18px rgba(255,0,85,.4);display:none}
+    /* FRISES AUTRES */
+    #others-section{width:100%;padding:0 10px 16px;display:none}
+    #others-section h3{font-size:.76rem;color:rgba(255,255,255,.35);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+    .other-timeline{margin-bottom:12px}
+    .other-header{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.45);margin-bottom:4px;display:flex;justify-content:space-between}
+    .other-header.cur{color:var(--secondary)}
+    .other-grid{display:grid;grid-template-columns:repeat(5,calc((100vw - 60px)/5));gap:4px}
+    .other-slot{aspect-ratio:2.5/3.5;border-radius:8px;background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#2d3436}
+    .other-slot.filled{background:white;border:none}
+    /* BLIND */
+    #blind-overlay{position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+    #blind-overlay.on{display:flex}
+    #blind-box{background:linear-gradient(145deg,#1a1040,#0f2040);border:1px solid rgba(255,255,255,.11);border-radius:24px;padding:26px 22px;width:88vw;max-width:360px;display:flex;flex-direction:column;align-items:center;gap:14px;animation:popIn .28s cubic-bezier(0.34,1.56,0.64,1)}
+    #blind-box h3{font-size:.7rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:2px}
+    #blind-q{font-size:1rem;font-weight:700;text-align:center}
+    .blind-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+    .btn-yes{background:linear-gradient(135deg,var(--success),#00cec9);color:white;padding:10px 22px;border-radius:50px;font-weight:700}
+    .btn-no{background:linear-gradient(135deg,var(--fail),#e55039);color:white;padding:10px 22px;border-radius:50px;font-weight:700}
+    #blind-fb{font-size:.88rem;font-weight:700;color:var(--secondary);text-align:center;min-height:1.2em}
+    #blind-reveal{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 18px;text-align:center;width:100%;display:none}
+    #reveal-artist{font-size:1.2rem;font-weight:800}
+    /* TOAST */
+    #toasts{position:fixed;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:6000;display:flex;flex-direction:column;gap:6px;align-items:center;width:90vw;pointer-events:none}
+    .toast{padding:10px 20px;border-radius:50px;font-weight:700;font-size:.8rem;color:white;box-shadow:0 4px 18px rgba(0,0,0,.4);text-align:center;animation:toastIn .3s ease-out}
+    .t-info{background:linear-gradient(45deg,#0984e3,#00cec9)}
+    .t-warn{background:linear-gradient(45deg,#f39c12,#e17055)}
+    .t-err{background:linear-gradient(45deg,var(--fail),#c0392b)}
+    @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    /* VICTOIRE */
+    #screen-win{background:radial-gradient(ellipse at 50% 30%,#2d1060 0%,#0f0c29 70%);z-index:3000}
+    #screen-win h2{font-size:2.4rem;background:linear-gradient(90deg,var(--gold),#fff 50%,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200% auto;animation:shimmer 2.5s linear infinite}
+    @keyframes shimmer{to{background-position:200% center}}
+    #win-name{font-size:1.4rem;font-weight:800;color:var(--primary);margin-bottom:16px}
+    #win-scores{width:100%;max-width:340px;display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+    .win-item{display:flex;justify-content:space-between;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.06)}
+    .win-item.w{background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3)}
+    .btn-replay{padding:13px 30px;border-radius:50px;font-weight:700;font-size:1rem;color:white;background:linear-gradient(135deg,var(--secondary),#0080ff);box-shadow:0 4px 18px rgba(0,128,255,.35)}
+    /* CONNECTING */
+    #screen-connecting{gap:14px}
+    .big-spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.12);border-top-color:var(--secondary);border-radius:50%;animation:spin .8s linear infinite}
+  </style>
+</head>
+<body>
+<div id="toasts"></div>
+
+<!-- CONNEXION -->
+<div class="screen" id="screen-connecting">
+  <div class="big-spinner"></div>
+  <p>Connexion au serveur<span class="waiting-dots"></span></p>
+</div>
+
+<!-- ACCUEIL -->
+<div class="screen hidden" id="screen-home">
+  <div class="logo">HITSTER</div>
+  <div class="subtitle">🎵 Blind Test & Chronologie — Multijoueur</div>
+  <div class="card-glass">
+    <div class="field-label">Ton prénom</div>
+    <input class="field-input" id="inp-name" type="text" placeholder="Ex : Alice" maxlength="20"/>
+    <button class="btn-green" id="btn-create">🎮 Créer une partie</button>
+    <div class="divider">ou rejoindre</div>
+    <div class="field-label">Code de la partie</div>
+    <input class="field-input" id="inp-code" type="text" placeholder="Ex : AB3X" maxlength="4" style="text-transform:uppercase;letter-spacing:6px;text-align:center;font-size:1.3rem"/>
+    <button class="btn-blue" id="btn-join">🔗 Rejoindre</button>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div class="screen hidden" id="screen-lobby">
+  <h2 style="font-size:1.3rem">En attente des joueurs</h2>
+  <div class="lobby-hint">Partage ce code :</div>
+  <div class="lobby-code" id="lobby-code">----</div>
+  <div class="lobby-hint">Ouvrir le jeu et saisir ce code</div>
+  <div class="players-list" id="players-list"></div>
+  <button class="btn-green hidden" id="btn-start" style="max-width:300px;width:100%">🚀 Démarrer</button>
+  <div class="waiting-dots" id="wait-host" style="color:rgba(255,255,255,.4);font-size:.86rem">En attente de l'hôte</div>
+</div>
+
+<!-- JEU -->
+<div class="screen hidden" id="screen-game">
+  <div class="game-header">
+    <div class="logo-mini">Hitster Online</div>
+    <div id="round-badge">Tour <span id="round-num" class="highlight">1</span></div>
+  </div>
+  <div id="scoreboard">
+    <h3>Classement</h3>
+    <div id="scores-list"></div>
+  </div>
+  <div id="current-zone">
+    <div id="current-card-wrap"></div>
+    <div id="audio-inline">
+      <div id="audio-status">Recherche…</div>
+      <div id="audio-spinner" class="spinner"></div>
+      <div id="audio-eq" class="play-anim" style="display:none">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+      <button id="stop-btn">⏹ Stop</button>
+    </div>
+    <div id="controls-wrap">
+      <div id="song-info"></div>
+      <button id="listen-btn">▶ Écouter l'extrait</button>
+      <div id="blind-badges">
+        <span>🔹 <span id="tok-count">0</span>/3</span>
+        <span>🃏 <span id="jok-count">0</span></span>
+      </div>
+    </div>
+    <div id="waiting-turn">⏳ Tour de <strong id="active-name">…</strong></div>
+  </div>
+  <div id="timeline-section">
+    <div class="timeline-header">
+      <span id="my-label">Ma frise</span>
+      <span id="my-score">0/10</span>
+    </div>
+    <div class="placement-grid" id="my-grid"></div>
+  </div>
+  <div id="feedback-zone"></div>
+  <button id="next-btn">Joueur Suivant ➡</button>
+  <div id="others-section">
+    <h3>Frises des autres</h3>
+    <div id="others-grids"></div>
+  </div>
+</div>
+
+<!-- BLIND TEST -->
+<div id="blind-overlay">
+  <div id="blind-box">
+    <h3>Blind Test</h3>
+    <div id="blind-q"></div>
+    <div class="blind-btns">
+      <button class="btn-yes" id="blind-yes">👍 Oui</button>
+      <button class="btn-no"  id="blind-no">👎 Non</button>
+    </div>
+    <button id="joker-btn" style="background:linear-gradient(135deg,#ffd700,#f9ca24);color:#1a1a2e;padding:8px 18px;border-radius:50px;font-size:.86rem;font-weight:700;display:none">
+      🃏 Joker (<span id="jok-inline">0</span>)
+    </button>
+    <div id="blind-fb"></div>
+    <div id="blind-reveal">
+      <div id="reveal-artist" style="font-size:1.2rem;font-weight:800"></div>
+      <div id="reveal-title" style="font-size:.76rem;opacity:.6"></div>
+    </div>
+  </div>
+</div>
+
+<!-- VICTOIRE -->
+<div class="screen hidden" id="screen-win">
+  <h2>🏆 VICTOIRE !</h2>
+  <div id="win-name"></div>
+  <div id="win-scores"></div>
+  <button class="btn-replay" id="btn-replay">🔄 Rejouer</button>
+</div>
+
+<script src="data.js"></script>
+<script>
+// ================================================================
+// HITSTER ONLINE — CLIENT v1.0
+// ================================================================
+const WS_URL = location.protocol==='https:' ? 'wss://'+location.host : 'ws://'+location.host;
+const $ = id => document.getElementById(id);
+
+let ws, myId='', myName='', roomCode='';
+let gameState=null, currentAudio=null;
+let aReponduBlind=false, dragCard=null, dragClone=null, dragOffX=0, dragOffY=0;
+
+// ── TOAST ────────────────────────────────────────────────────────
+function toast(msg, type='info', ms=3200) {
+  const t=document.createElement('div');
+  t.className='toast t-'+type; t.textContent=msg;
+  $('toasts').appendChild(t);
+  setTimeout(()=>{t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(()=>t.remove(),320);},ms);
+}
+
+// ── ECRANS ───────────────────────────────────────────────────────
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));$(id).classList.remove('hidden');}
+
+// ── DÉCENNIE ─────────────────────────────────────────────────────
+function dc(y){const d=Math.floor(y/10)*10;return d<=1969?'d60':d<=1979?'d70':d<=1989?'d80':d<=1999?'d90':d<=2009?'d00':d<=2019?'d10':'d20';}
+function cartes(j){return (j.cartesPlacees||[]).filter(Boolean).length;}
+
+// ── WEBSOCKET ────────────────────────────────────────────────────
+function connect(){
+  show('screen-connecting');
+  ws=new WebSocket(WS_URL);
+  ws.onopen=()=>show('screen-home');
+  ws.onmessage=e=>handle(JSON.parse(e.data));
+  ws.onclose=()=>{toast('Connexion perdue. Rechargement…','err');setTimeout(()=>location.reload(),2500);};
+  ws.onerror=()=>toast('Erreur de connexion.','err');
+}
+function send(msg){if(ws&&ws.readyState===1)ws.send(JSON.stringify(msg));}
+
+// ── MESSAGES SERVEUR ─────────────────────────────────────────────
+function handle(msg){
+  switch(msg.type){
+    case 'ROOM_CREATED': myId=msg.playerId; roomCode=msg.code; $('lobby-code').textContent=msg.code; show('screen-lobby'); break;
+    case 'ROOM_JOINED':  myId=msg.playerId; roomCode=msg.code; $('lobby-code').textContent=msg.code; show('screen-lobby'); break;
+    case 'LOBBY_UPDATE': renderLobby(msg.players,msg.hostId); break;
+    case 'GAME_STARTED': aReponduBlind=false; show('screen-game'); break;
+    case 'GAME_STATE':   gameState=msg.gameState; renderGame(); break;
+    case 'CARD_PLACED':  showCardPlacedFeedback(msg); break;
+    case 'GAME_OVER':    renderWin(msg.winner,msg.joueurs); break;
+    case 'ERROR':        toast(msg.message,'err'); break;
+  }
+}
+
+// ── LOBBY ────────────────────────────────────────────────────────
+function renderLobby(players,hostId){
+  const list=$('players-list'); list.innerHTML='';
+  players.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='player-item'+(p.id===myId?' me':'');
+    d.innerHTML=`<div class="player-avatar">${p.name.charAt(0).toUpperCase()}</div>
+      <div class="player-name">${p.name}${p.id===myId?' (moi)':''}</div>
+      ${p.id===hostId?'<div class="host-badge">Hôte</div>':''}`;
+    list.appendChild(d);
+  });
+  const isHost=hostId===myId;
+  $('btn-start').classList.toggle('hidden',!isHost||players.length<2);
+  $('wait-host').style.display=isHost?'none':'block';
+}
+
+// ── RENDU JEU ────────────────────────────────────────────────────
+function renderGame(){
+  if(!gameState)return;
+  const gs=gameState;
+  const me=gs.joueurs.find(j=>j.id===myId);
+  const active=gs.joueurs[gs.joueurActuelIndex];
+  const myTurn=active?.id===myId;
+
+  $('round-num').textContent=gs.numeroTour;
+
+  // Scores
+  const sl=$('scores-list'); sl.innerHTML='';
+  gs.joueurs.forEach(j=>{
+    const d=document.createElement('div');
+    d.className='score-item'+(j.id===active?.id?' active-turn':'')+(j.id===myId?' me-score':'');
+    d.innerHTML=`<div class="score-name">${j.name}${j.id===myId?' ★':''}</div>
+      <div class="score-detail">${cartes(j)}/${gs.maxSlots} · 🔹${j.jetons||0} · 🃏${j.jokers||0}</div>`;
+    sl.appendChild(d);
+  });
+
+  // Carte courante
+  const wrap=$('current-card-wrap'); wrap.innerHTML='';
+  if(myTurn && gs.chansonActuelle){
+    wrap.appendChild(makeCard(gs.chansonActuelle,gs.revealYear,true));
+    $('controls-wrap').style.display='flex';
+    $('waiting-turn').style.display='none';
+    $('tok-count').textContent=me?.jetons||0;
+    $('jok-count').textContent=me?.jokers||0;
+    $('jok-inline').textContent=me?.jokers||0;
+    $('joker-btn').style.display=(me?.jokers||0)>0&&!aReponduBlind?'block':'none';
+    $('listen-btn').style.display='inline-block';
+    $('song-info').textContent="Écoute, devine l'interprète et place la carte.";
+  } else {
+    wrap.appendChild(makeCardBack());
+    $('controls-wrap').style.display='none';
+    $('waiting-turn').style.display='flex';
+    $('active-name').textContent=active?.name||'…';
+    if(!myTurn) stopAudio();
+  }
+
+  // Ma frise
+  $('my-label').textContent=(me?.name||'Moi')+' (moi)';
+  $('my-score').textContent=cartes(me||{})+'/'+(gs.maxSlots);
+  renderGrid($('my-grid'),me,gs.maxSlots,myTurn&&!!gs.chansonActuelle);
+
+  // Frises autres
+  renderOthers(gs);
+
+  // Bouton suivant
+  $('next-btn').style.display=(myTurn&&!gs.chansonActuelle&&!gs.gameTermine)?'block':'none';
+}
+
+// ── CARTES ───────────────────────────────────────────────────────
+function makeCard(chanson,reveal,drag){
+  const card=document.createElement('div');
+  card.className='card';
+  if(drag){card.draggable=true;card.style.cursor='grab';}
+  if(!reveal){
+    const back=document.createElement('div'); back.className='card-back';
+    const logo=document.createElement('div'); logo.className='card-logo'; logo.textContent='?';
+    back.appendChild(logo);
+    const hint=document.createElement('div');
+    hint.style.cssText='position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:.48rem;color:rgba(255,255,255,.5);padding:0 4px;line-height:1.3;';
+    hint.textContent='👆 Blind test';
+    back.appendChild(hint); card.appendChild(back);
+    card.addEventListener('click',openBlind);
+  } else {
+    const face=document.createElement('div'); face.className='card-face';
+    const tit=document.createElement('div'); tit.className='card-title'; tit.textContent=chanson.titre;
+    const art=document.createElement('div'); art.className='card-artist'; art.textContent=chanson.artiste;
+    const yr=document.createElement('div');  yr.className='card-year '+dc(chanson.annee); yr.textContent=chanson.annee;
+    face.appendChild(tit); face.appendChild(art); face.appendChild(yr);
+    card.appendChild(face);
+  }
+  if(drag){
+    card.addEventListener('dragstart',e=>{dragCard=card;e.dataTransfer.effectAllowed='move';});
+    card.addEventListener('dragend',()=>{dragCard=null;});
+  }
+  return card;
+}
+
+function makeCardBack(){
+  const c=document.createElement('div'); c.className='card';
+  const b=document.createElement('div'); b.className='card-back';
+  const l=document.createElement('div'); l.className='card-logo'; l.textContent='?';
+  b.appendChild(l); c.appendChild(b); return c;
+}
+
+function makePlaced(chanson){
+  const c=document.createElement('div'); c.className='card';
+  const f=document.createElement('div'); f.className='card-face';
+  const tit=document.createElement('div'); tit.className='card-title'; tit.textContent=chanson.titre;
+  const art=document.createElement('div'); art.className='card-artist'; art.textContent=chanson.artiste;
+  const yr=document.createElement('div');  yr.className='card-year '+dc(chanson.annee); yr.textContent=chanson.annee;
+  f.appendChild(tit); f.appendChild(art); f.appendChild(yr);
+  c.appendChild(f); return c;
+}
+
+// ── FRISE ────────────────────────────────────────────────────────
+function renderGrid(el,joueur,maxSlots,canDrop){
+  el.innerHTML='';
+  const slots=joueur?.cartesPlacees||new Array(maxSlots).fill(null);
+  for(let i=0;i<maxSlots;i++){
+    const slot=document.createElement('div');
+    slot.className='drop-target'; slot.dataset.index=i;
+    const c=slots[i];
+    if(c){
+      slot.classList.add('occupied'); slot.appendChild(makePlaced(c));
+    } else {
+      const left=[...slots].slice(0,i).filter(Boolean);
+      const right=[...slots].slice(i+1).filter(Boolean);
+      const maxL=left.length?Math.max(...left.map(x=>x.annee)):null;
+      const minR=right.length?Math.min(...right.map(x=>x.annee)):null;
+      if(maxL||minR){
+        const h=document.createElement('div'); h.className='slot-hint';
+        h.textContent=maxL&&minR?`${maxL}–${minR}`:maxL?`>${maxL}`:`<${minR}`;
+        slot.appendChild(h);
+      }
+      if(canDrop){
+        slot.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';});
+        slot.addEventListener('drop',e=>{e.preventDefault();drop(i);});
+        slot.addEventListener('click',()=>drop(i));
+      }
+    }
+    el.appendChild(slot);
+  }
+}
+
+function renderOthers(gs){
+  const sec=$('others-section'), con=$('others-grids');
+  const others=gs.joueurs.filter(j=>j.id!==myId);
+  if(!others.length){sec.style.display='none';return;}
+  sec.style.display='block'; con.innerHTML='';
+  others.forEach(j=>{
+    const isAct=gs.joueurs[gs.joueurActuelIndex]?.id===j.id;
+    const wrap=document.createElement('div'); wrap.className='other-timeline';
+    const hdr=document.createElement('div'); hdr.className='other-header'+(isAct?' cur':'');
+    hdr.innerHTML=`<span>${j.name}${isAct?' ▶':''}</span><span>${cartes(j)}/${gs.maxSlots}</span>`;
+    const grid=document.createElement('div'); grid.className='other-grid';
+    for(let i=0;i<gs.maxSlots;i++){
+      const s=document.createElement('div');
+      const c=(j.cartesPlacees||[])[i];
+      s.className='other-slot'+(c?' filled':'');
+      if(c)s.textContent=c.annee;
+      grid.appendChild(s);
+    }
+    wrap.appendChild(hdr); wrap.appendChild(grid); con.appendChild(wrap);
+  });
+}
+
+// ── PLACEMENT ────────────────────────────────────────────────────
+function drop(index){
+  if(!gameState?.chansonActuelle)return;
+  if(gameState.joueurs[gameState.joueurActuelIndex]?.id!==myId)return;
+  send({type:'PLACE_CARD',index});
+  stopAudio(); closeBlind();
+}
+
+function showCardPlacedFeedback(msg){
+  if(!msg.chanson)return;
+  const fz=$('feedback-zone');
+  fz.innerHTML='';
+  const b=document.createElement('div');
+  b.className='fz-banner '+(msg.success?'success':'fail');
+  if(msg.success) b.textContent=msg.playerId===myId?'✔ CORRECT !':'✔ '+msg.playerName+' : CORRECT !';
+  else b.textContent=msg.playerId===myId?'✘ ERREUR ! C'était '+msg.chanson.annee:'✘ '+msg.playerName+' : ERREUR ('+msg.chanson.annee+')';
+  fz.appendChild(b);
+  setTimeout(()=>{b.style.transition='opacity .3s';b.style.opacity='0';setTimeout(()=>fz.innerHTML='',350);},2500);
+}
+
+// ── AUDIO ────────────────────────────────────────────────────────
+$('listen-btn').addEventListener('click',playAudio);
+$('stop-btn').addEventListener('click',()=>stopAudio());
+
+async function playAudio(){
+  if(!gameState?.chansonActuelle)return;
+  const chanson=gameState.chansonActuelle;
+  stopAudio(true);
+  const ai=$('audio-inline'); ai.classList.add('active');
+  $('audio-status').textContent='Recherche…';
+  $('audio-spinner').style.display='block';
+  $('audio-eq').style.display='none';
+  try{
+    const cb='itunes_cb_'+Math.round(1e6*Math.random());
+    const url=chanson.itunesId
+      ?`https://itunes.apple.com/lookup?id=${chanson.itunesId}&entity=song&country=fr&callback=${cb}`
+      :`https://itunes.apple.com/search?term=${encodeURIComponent(chanson.artiste.split('feat')[0].trim()+' '+chanson.titre.split('(')[0].trim())}&entity=song&limit=5&country=fr&callback=${cb}`;
+    const data=await new Promise((res,rej)=>{
+      const sc=document.createElement('script'); sc.src=url;
+      window[cb]=d=>{delete window[cb];document.body.removeChild(sc);res(d);};
+      sc.onerror=()=>{delete window[cb];document.body.removeChild(sc);rej();};
+      document.body.appendChild(sc);
+    });
+    if(data.resultCount>0){
+      currentAudio=new Audio(data.results[0].previewUrl);
+      currentAudio.volume=1;
+      currentAudio.oncanplaythrough=()=>{
+        $('audio-status').textContent='♪ En cours…';
+        $('audio-spinner').style.display='none';
+        $('audio-eq').style.display='flex';
+        currentAudio.play().catch(()=>$('audio-status').textContent='Appuyez ▶');
+      };
+      currentAudio.onerror=()=>hideAudio();
+      currentAudio.onended=()=>{hideAudio();openBlind();};
+    } else {
+      toast("Extrait introuvable.",'warn'); hideAudio(); openBlind();
+    }
+  } catch(e){ toast('Erreur audio.','err'); hideAudio(); }
+}
+
+function stopAudio(keep=false){
+  if(currentAudio){currentAudio.pause();currentAudio.currentTime=0;currentAudio=null;}
+  if(!keep)hideAudio();
+}
+function hideAudio(){
+  $('audio-inline').classList.remove('active');
+  $('audio-spinner').style.display='block';
+  $('audio-eq').style.display='none';
+}
+
+// ── BLIND TEST ───────────────────────────────────────────────────
+function openBlind(){
+  if(!gameState?.chansonActuelle||aReponduBlind)return;
+  const gs=gameState;
+  if(gs.joueurs[gs.joueurActuelIndex]?.id!==myId)return;
+  const me=gs.joueurs.find(j=>j.id===myId);
+  if((me?.jokers||0)>0)return;
+  $('blind-q').textContent=`Connais-tu l'interprète de "${gs.chansonActuelle.titre}" ?`;
+  $('blind-fb').textContent=''; $('blind-reveal').style.display='none';
+  $('blind-yes').disabled=false; $('blind-no').disabled=false;
+  $('blind-overlay').classList.add('on');
+}
+
+function closeBlind(){$('blind-overlay').classList.remove('on');}
+
+$('blind-yes').addEventListener('click',()=>answerBlind(true));
+$('blind-no').addEventListener('click',()=>answerBlind(false));
+
+function answerBlind(ok){
+  if(aReponduBlind)return;
+  aReponduBlind=true;
+  const chanson=gameState?.chansonActuelle;
+  $('blind-fb').textContent=ok?'✔️ Bonne réponse (+1 jeton)':'❌ Mauvaise réponse';
+  $('blind-yes').disabled=true; $('blind-no').disabled=true;
+  if(ok&&chanson){
+    $('reveal-artist').textContent=chanson.artiste;
+    $('reveal-title').textContent=chanson.titre;
+    $('blind-reveal').style.display='block';
+  }
+  send({type:'BLIND_ANSWER',correct:ok});
+  setTimeout(closeBlind,1400);
+}
+
+$('joker-btn').addEventListener('click',()=>{send({type:'USE_JOKER'});closeBlind();});
+$('blind-overlay').addEventListener('click',e=>{if(e.target===$('blind-overlay'))closeBlind();});
+
+// ── BOUTON SUIVANT ───────────────────────────────────────────────
+$('next-btn').addEventListener('click',()=>{
+  aReponduBlind=false;
+  send({type:'NEXT_PLAYER'});
+  $('next-btn').style.display='none';
+  $('feedback-zone').innerHTML='';
+});
+
+// ── VICTOIRE ─────────────────────────────────────────────────────
+function renderWin(winnerName,joueurs){
+  stopAudio();
+  $('win-name').textContent='🥇 '+winnerName;
+  const sc=$('win-scores'); sc.innerHTML='';
+  [...joueurs].sort((a,b)=>cartes(b)-cartes(a)).forEach(j=>{
+    const d=document.createElement('div');
+    d.className='win-item'+(j.name===winnerName?' w':'');
+    d.innerHTML=`<span>${j.name}</span><span>${cartes(j)} cartes</span>`;
+    sc.appendChild(d);
+  });
+  show('screen-win');
+}
+$('btn-replay').addEventListener('click',()=>location.reload());
+
+// ── ACCUEIL ──────────────────────────────────────────────────────
+$('btn-create').addEventListener('click',()=>{
+  const n=$('inp-name').value.trim();
+  if(!n){toast('Entre ton prénom !','warn');return;}
+  myName=n;
+  send({type:'CREATE_ROOM',playerName:n,songsData:typeof chansonsData!=='undefined'?chansonsData:[]});
+});
+$('btn-join').addEventListener('click',()=>{
+  const n=$('inp-name').value.trim();
+  const c=$('inp-code').value.trim().toUpperCase();
+  if(!n){toast('Entre ton prénom !','warn');return;}
+  if(c.length!==4){toast('Le code fait 4 lettres.','warn');return;}
+  myName=n; send({type:'JOIN_ROOM',playerName:n,code:c});
+});
+$('inp-code').addEventListener('input',e=>e.target.value=e.target.value.toUpperCase());
+$('btn-start').addEventListener('click',()=>send({type:'START_GAME'}));
+
+// ── TOUCH DRAG ───────────────────────────────────────────────────
+document.addEventListener('touchstart',e=>{
+  const card=e.touches[0]&&document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY)?.closest('.card[draggable]');
+  if(!card)return;
+  dragCard=card;
+  const r=card.getBoundingClientRect();
+  dragOffX=e.touches[0].clientX-r.left; dragOffY=e.touches[0].clientY-r.top;
+  dragClone=card.cloneNode(true);
+  dragClone.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;z-index:9999;pointer-events:none;opacity:.85;transform:scale(1.08);`;
+  document.body.appendChild(dragClone);
+  card.dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:new DataTransfer()}));
+},{passive:true});
+
+document.addEventListener('touchmove',e=>{
+  if(!dragClone)return; e.preventDefault();
+  dragClone.style.left=(e.touches[0].clientX-dragOffX)+'px';
+  dragClone.style.top=(e.touches[0].clientY-dragOffY)+'px';
+},{passive:false});
+
+document.addEventListener('touchend',e=>{
+  if(!dragCard||!dragClone)return;
+  dragClone.style.display='none';
+  const el=document.elementFromPoint(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
+  const slot=el?.closest('.drop-target');
+  if(slot){const idx=parseInt(slot.dataset.index);if(!isNaN(idx))drop(idx);}
+  dragCard.dispatchEvent(new DragEvent('dragend',{bubbles:true}));
+  dragClone.remove(); dragClone=null; dragCard=null;
+},{passive:true});
+
+// ── GO ───────────────────────────────────────────────────────────
+connect();
+</script>
+</body>
+</html>
