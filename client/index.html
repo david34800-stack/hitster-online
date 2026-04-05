@@ -266,7 +266,7 @@
 // ================================================================
 // HITSTER ONLINE — CLIENT v1.0
 // ================================================================
-const WS_URL = location.protocol==='https:' ? 'wss://'+location.host : 'ws://'+location.host;
+const WS_URL = (location.protocol==='https:' ? 'wss://' : 'ws://') + location.host;
 const $ = id => document.getElementById(id);
 
 let ws, myId='', myName='', roomCode='';
@@ -291,11 +291,28 @@ function cartes(j){return (j.cartesPlacees||[]).filter(Boolean).length;}
 // ── WEBSOCKET ────────────────────────────────────────────────────
 function connect(){
   show('screen-connecting');
-  ws=new WebSocket(WS_URL);
-  ws.onopen=()=>show('screen-home');
-  ws.onmessage=e=>handle(JSON.parse(e.data));
-  ws.onclose=()=>{toast('Connexion perdue. Rechargement…','err');setTimeout(()=>location.reload(),2500);};
-  ws.onerror=()=>toast('Erreur de connexion.','err');
+  $('screen-connecting').querySelector('p').innerHTML = 'Connexion au serveur<span class="waiting-dots"></span><br><small style="color:rgba(255,255,255,.35);font-size:.75rem">Première connexion : jusqu\'à 50 secondes</small>';
+  
+  try {
+    ws = new WebSocket(WS_URL);
+  } catch(e) {
+    setTimeout(()=>location.reload(), 3000);
+    return;
+  }
+
+  // Timeout si pas de connexion après 60 secondes
+  const timeout = setTimeout(() => {
+    if (ws.readyState !== WebSocket.OPEN) {
+      ws.close();
+      $('screen-connecting').querySelector('p').innerHTML = 'Le serveur met du temps à démarrer…<br><small style="color:rgba(255,255,255,.35);font-size:.75rem">Rechargement automatique dans 5 secondes</small>';
+      setTimeout(()=>location.reload(), 5000);
+    }
+  }, 60000);
+
+  ws.onopen = () => { clearTimeout(timeout); show('screen-home'); };
+  ws.onmessage = e => handle(JSON.parse(e.data));
+  ws.onclose = () => { clearTimeout(timeout); toast('Connexion perdue. Rechargement…','err'); setTimeout(()=>location.reload(), 2500); };
+  ws.onerror = () => {};
 }
 function send(msg){if(ws&&ws.readyState===1)ws.send(JSON.stringify(msg));}
 
