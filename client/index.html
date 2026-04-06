@@ -511,7 +511,7 @@ function showCardPlacedFeedback(msg){
   const b=document.createElement('div');
   b.className='fz-banner '+(msg.success?'success':'fail');
   if(msg.success) b.textContent=msg.playerId===myId?'✔ CORRECT !':'✔ '+msg.playerName+' : CORRECT !';
-  else b.textContent=msg.playerId===myId?'✘ ERREUR ! C'était '+msg.chanson.annee:'✘ '+msg.playerName+' : ERREUR ('+msg.chanson.annee+')';
+  else b.textContent=msg.playerId===myId?'✘ ERREUR ! Annee: '+msg.chanson.annee:'✘ '+msg.playerName+' : ERREUR ('+msg.chanson.annee+')';
   fz.appendChild(b);
   setTimeout(()=>{b.style.transition='opacity .3s';b.style.opacity='0';setTimeout(()=>fz.innerHTML='',350);},2500);
 }
