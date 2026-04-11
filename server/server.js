@@ -13,7 +13,8 @@ const server = http.createServer(app);
 const wss    = new WebSocket.Server({ server });
 
 // Servir les fichiers statiques du client
-app.use(express.static(path.join(__dirname, '../client')));
+app.use(express.static(path.join(__dirname, '..', 'client')));
+app.use(express.static(path.join(process.cwd(), 'client')));
 
 // ────────────────────────────────────────────────────────────
 // UTILITAIRES
