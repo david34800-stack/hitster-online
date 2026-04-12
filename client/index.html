@@ -328,6 +328,7 @@ function handle(msg){
     case 'LOBBY_UPDATE': renderLobby(msg.players,msg.hostId); break;
     case 'GAME_STARTED': aReponduBlind=false; show('screen-game'); break;
     case 'GAME_STATE':   gameState=msg.gameState; renderGame(); break;
+    case 'MOVE_REJECTED': toast('Déplacement impossible (ordre incorrect).','warn'); break;
     case 'CARD_PLACED':  showCardPlacedFeedback(msg); break;
     case 'GAME_OVER':    renderWin(msg.winner,msg.joueurs); break;
     case 'ERROR':        toast(msg.message,'err'); break;
@@ -457,7 +458,21 @@ function renderGrid(el,joueur,maxSlots,canDrop){
     slot.className='drop-target'; slot.dataset.index=i;
     const c=slots[i];
     if(c){
-      slot.classList.add('occupied'); slot.appendChild(makePlaced(c));
+      slot.classList.add('occupied');
+      const card=makePlaced(c);
+      // Cartes placées draggables si c'est mon tour
+      if(canDrop){
+        card.draggable=true;
+        card.style.cursor='grab';
+        card.addEventListener('dragstart',e=>{
+          dragCard=card;
+          dragCard._srcIndex=i;
+          dragCard._isPlaced=true;
+          e.dataTransfer.effectAllowed='move';
+        });
+        card.addEventListener('dragend',()=>{dragCard=null;});
+      }
+      slot.appendChild(card);
     } else {
       const left=[...slots].slice(0,i).filter(Boolean);
       const right=[...slots].slice(i+1).filter(Boolean);
@@ -470,8 +485,18 @@ function renderGrid(el,joueur,maxSlots,canDrop){
       }
       if(canDrop){
         slot.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';});
-        slot.addEventListener('drop',e=>{e.preventDefault();drop(i);});
-        slot.addEventListener('click',()=>drop(i));
+        slot.addEventListener('drop',e=>{
+          e.preventDefault();
+          if(dragCard?._isPlaced){
+            moveCard(dragCard._srcIndex,i);
+          } else {
+            drop(i);
+          }
+        });
+        slot.addEventListener('click',()=>{
+          if(dragCard?._isPlaced) return; // ignore click pendant drag
+          drop(i);
+        });
       }
     }
     el.appendChild(slot);
@@ -506,6 +531,12 @@ function drop(index){
   if(gameState.joueurs[gameState.joueurActuelIndex]?.id!==myId)return;
   send({type:'PLACE_CARD',index});
   stopAudio(); closeBlind();
+}
+
+function moveCard(srcIndex, destIndex){
+  if(srcIndex===destIndex)return;
+  if(gameState.joueurs[gameState.joueurActuelIndex]?.id!==myId)return;
+  send({type:'MOVE_CARD',srcIndex,destIndex});
 }
 
 function showCardPlacedFeedback(msg){
@@ -648,11 +679,23 @@ $('btn-start').addEventListener('click',()=>send({type:'START_GAME'}));
 
 // ── TOUCH DRAG ───────────────────────────────────────────────────
 document.addEventListener('touchstart',e=>{
-  const card=e.touches[0]&&document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY)?.closest('.card[draggable]');
+  const touch=e.touches[0];
+  if(!touch)return;
+  const el=document.elementFromPoint(touch.clientX,touch.clientY);
+  // Chercher d'abord une carte placée draggable, sinon la carte courante
+  const card=el?.closest('.card[draggable]');
   if(!card)return;
   dragCard=card;
+  // Récupérer les infos de la carte placée si elle en a
+  const slot=card.closest('.drop-target');
+  if(slot&&slot.classList.contains('occupied')&&slot.dataset.index!==undefined){
+    dragCard._srcIndex=parseInt(slot.dataset.index);
+    dragCard._isPlaced=true;
+  } else {
+    dragCard._isPlaced=false;
+  }
   const r=card.getBoundingClientRect();
-  dragOffX=e.touches[0].clientX-r.left; dragOffY=e.touches[0].clientY-r.top;
+  dragOffX=touch.clientX-r.left; dragOffY=touch.clientY-r.top;
   dragClone=card.cloneNode(true);
   dragClone.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;z-index:9999;pointer-events:none;opacity:.85;transform:scale(1.08);`;
   document.body.appendChild(dragClone);
@@ -670,7 +713,16 @@ document.addEventListener('touchend',e=>{
   dragClone.style.display='none';
   const el=document.elementFromPoint(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
   const slot=el?.closest('.drop-target');
-  if(slot){const idx=parseInt(slot.dataset.index);if(!isNaN(idx))drop(idx);}
+  if(slot){
+    const idx=parseInt(slot.dataset.index);
+    if(!isNaN(idx)){
+      if(dragCard._isPlaced){
+        moveCard(dragCard._srcIndex,idx);
+      } else {
+        drop(idx);
+      }
+    }
+  }
   dragCard.dispatchEvent(new DragEvent('dragend',{bubbles:true}));
   dragClone.remove(); dragClone=null; dragCard=null;
 },{passive:true});
