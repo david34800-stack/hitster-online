@@ -302,7 +302,32 @@ wss.on('connection', ws => {
         broadcastGameState(room);
         break;
       }
+// ── Déplacer une carte placée ────────────────────────────
+case 'MOVE_CARD': {
+  const room = getRoom(ws.roomCode);
+  if (!room || room.state !== 'playing') return;
+  const gs = room.gameState;
+  const joueur = gs.joueurs.find(j => j.id === ws.id);
+  if (!joueur || gs.joueurs[gs.joueurActuelIndex].id !== ws.id) return;
 
+  const { srcIndex, destIndex } = msg;
+  const slots = joueur.cartesPlacees;
+  const card = slots[srcIndex];
+  if (!card || slots[destIndex]) return;
+
+  // Vérifier que le déplacement respecte l'ordre chronologique
+  const tempSlots = [...slots];
+  tempSlots[srcIndex] = null;
+  if (!placementValide(destIndex, card, tempSlots, gs.maxSlots)) {
+    send(ws, { type: 'MOVE_REJECTED' });
+    return;
+  }
+
+  slots[srcIndex] = null;
+  slots[destIndex] = card;
+  broadcastGameState(room);
+  break;
+}
       // ── Joueur suivant ───────────────────────────────────
       case 'NEXT_PLAYER': {
         const room = getRoom(ws.roomCode);
